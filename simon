@@ -1,0 +1,103 @@
+#include "simon.h"
+
+const short buttonQuantity = 4;
+short buttons[buttonQuantity] = {2, 3, 4, 5};
+short leds[buttonQuantity] = {7, 8, 9, 10};
+int tones[buttonQuantity] = {NOTE_C4, NOTE_F4, NOTE_A4, NOTE_E4};
+short buzzer = 11;
+int melody[] = {NOTE_C4, NOTE_G3, NOTE_G3, NOTE_A3, NOTE_G3, 0, NOTE_B3, NOTE_C4};
+int noteDurations[] = {4, 8, 8, 4, 4, 4, 4, 4};
+short sequency[100];
+short sequencyCounter = 0;
+int duracionbeep = 100;
+void(* resetFunc) (void) = 0; 
+void setup() {
+  // put your setup code here, to run once:
+  Serial.begin(9600);
+  randomSeed(analogRead(0));
+  setUpLeds();
+  setUpButtons();
+  delay(1000);
+  musiquear();
+}
+
+void loop() {
+  // put your main code here, to run repeatedly:
+  //addNew();
+  //sequencyPlayer();
+  bool notPressed=true;
+  play(getButtonPressed());
+//  while(notPressed){
+//    short button = getButtonPressed();
+//    if(button>=0){
+//      notPressed=false;
+//      play(button);
+//      Serial.println(button);
+//      Serial.println(sequency[sequencyCounter]);
+//    
+//      if(button==sequency[sequencyCounter]){
+//        Serial.println("lol");
+//      }
+//      else{
+//        resetFunc();
+//      }
+//    }
+//  }
+}
+
+void setUpLeds() {
+  for (int i = 0; i < 4; i++) {
+    pinMode(leds[i], OUTPUT);
+    //digitalWrite(leds[i], HIGH);
+  }
+}
+
+void setUpButtons() {
+  for (int i = 0; i < buttonQuantity; i++) {
+    pinMode(buttons[i], INPUT);
+
+  }
+}
+
+void musiquear() {
+  for (int thisNote = 0; thisNote < 8; thisNote++) {
+    int noteDuration = 1000 / noteDurations[thisNote];
+    tone(buzzer, melody[thisNote], noteDuration);
+    int pauseBetweenNotes = noteDuration * 1.30;
+    delay(pauseBetweenNotes);
+    noTone(buzzer);
+  }
+}
+
+void addNew() {
+  sequency[sequencyCounter++]= random(0,buttonQuantity);
+}
+
+void sequencyPlayer(){
+  for(int i=0; i<sequencyCounter; i++){
+  short pos = sequency[i];
+  play(pos);
+  }
+  Serial.println("secuencia finita");
+}
+
+void play(short num){
+  digitalWrite(leds[num], HIGH);
+  //Serial.println(tones[num]);
+  tone(buzzer, tones[num], duracionbeep);
+  delay(duracionbeep);
+  //noTone(buzzer);
+  digitalWrite(leds[num], LOW);
+  delay(100);
+  Serial.println(tones[num]);
+}
+
+short getButtonPressed(){
+  for(int i = 0; i < buttonQuantity; i++){
+    if (digitalRead(buttons[i]) == HIGH) {
+      Serial.println(i);
+      return i;
+    }
+  }
+  //return -1;
+}
