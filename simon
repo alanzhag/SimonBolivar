@@ -1,5 +1,6 @@
 #include "simon.h"
 
+int tono;
 short sequencyCounter = 0;
 short sequency[100];
 const short buttonQuantity = 4;
@@ -7,7 +8,7 @@ const short buzzer = 6;
 const int duracionbeep = 100;
 const int duracionleds = 250;
 int noteDuration;
-char* colores[4] = {"rojo","amarillo","verde","azul"};
+char* colores[4] = {"rojo", "amarillo", "verde", "azul"};
 short buttons[buttonQuantity] = {13, 12, 11, 10};
 short leds[buttonQuantity] = {5, 4, 3, 2};
 int noteDurationsIntro[] = {4, 8, 8, 4, 4, 8, 8, 4, 4};
@@ -16,16 +17,18 @@ int noteDurationsLose[] = {4, 4, 4, 4, 1, 8};
 int animacionLose[] = {2, 3, 4, 5};
 int animacionIntro[] = {5, 4, 3, 2, 5, 4, 3};
 int tones[buttonQuantity] = {NOTE_C4, NOTE_E4, NOTE_F4, NOTE_A4};
+int tones_1[buttonQuantity] = {NOTE_D4, NOTE_FS4, NOTE_AS4, NOTE_D5};
 int melodyIntro[] = {NOTE_C4, NOTE_G3, NOTE_G3, NOTE_A3, NOTE_G3, 0, 0, NOTE_B3, NOTE_C4};
 int melodyLose[] = {NOTE_AS4, NOTE_A4, NOTE_GS4, NOTE_G4, NOTE_FS4, NOTE_F4};
 int melodyWin[] = {NOTE_C4, NOTE_C4, NOTE_C4, NOTE_F4, NOTE_A4, 0};
 
-
 void(* resetFunc) (void) = 0;
+
 void setup() {
   // put your setup code here, to run once:
   Serial.begin(9600);
   randomSeed(analogRead(0));
+  tono = random(0,2);
   //setUpLeds(true, true, duracionleds, 0); //enciende y apaga con el mismo delay
   setUpLeds();
   setUpButtons();
@@ -41,40 +44,42 @@ void loop() {
   sequencyPlayer();
 
   bool notPressed = true;
-
-  while (notPressed) {
+  int contador = 0;
+  while (notPressed && contador < sequencyCounter) {
     short button = getButtonPressed();
     if (button >= 0) {
-      notPressed = false;
+      //notPressed = false;
       play(button, duracionbeep);
-	  delay(duracionleds);
-	  //Serial.println(sequencyCounter);
-	  Serial.print("Simon dice: ");
-      Serial.println(convLedColor(sequency[sequencyCounter-1])); //el ultimo en prenderse EL MENOS UNO SOLUCIONARLO
+      delay(duracionleds);
+      //Serial.println(sequencyCounter);
+      Serial.print("Simon dice: ");
+      Serial.println(convLedColor(sequency[sequencyCounter - 1])); //el ultimo en prenderse EL MENOS UNO SOLUCIONARLO
       //Serial.println(button == sequency[sequencyCounter-1]);  //ver si anda la igualdad
-      if (button == sequency[sequencyCounter-1]) {      //si el boton es lo ultimo que sono
+
+      if (button == sequency[contador]) {    //si el boton corresponde a la posicion del contador
         Serial.println("Se dio");
+        contador += 1;
       }
       else {
-		play(sequency[sequencyCounter], 1000);
-		Serial.println("Perdiste :( ");
-		delay(100);
-		lose();
+        Serial.println(contador);
+        //Serial.println(sequencyCounter - 1]);
+        play(sequency[sequencyCounter - 1], 1000);
+        Serial.println("Perdiste :( ");
+        delay(100);
+        lose();
+        delay(100);
         resetFunc();
       }
     }
+
   }
-  //for de kibord
-  //short button = getButtonPressed();
-  //if(button>=0) {
-  //  play(getButtonPressed());
-  //}
 }
 
+
 void setUpLeds() {
-	for (int i = 0; i < 4; i++) {
-		pinMode(leds[i], OUTPUT);
-	}
+  for (int i = 0; i < 4; i++) {
+    pinMode(leds[i], OUTPUT);
+  }
 }
 
 void setUpButtons() {
@@ -85,69 +90,69 @@ void setUpButtons() {
 
 void intro() {
   for (int thisNote = 0; thisNote < 9; thisNote++) {
-	 Serial.println(thisNote);
-	switch (thisNote)
-	{
-	case 7:
-		controlLeds(true, false, 0, 70); //  enciende pero no apaga
-		controlLeds(false, false, 0, 0);
-		break;
-	case 8:
-		controlLeds(true, false, 0, 70); //  enciende pero no apaga
-		controlLeds(false, false, 0, 0);
-		break;
-	default:
-		digitalWrite(animacionIntro[thisNote], HIGH);
-		break;
-	}
-	noteDuration = 1000 / noteDurationsIntro[thisNote];
-	tone(buzzer, melodyIntro[thisNote], noteDuration);
-	delay(15);
-	if (thisNote > 3 && thisNote < 7)
-	{
-		digitalWrite(animacionIntro[thisNote], LOW);
-	}
+    //Serial.println(thisNote);
+    switch (thisNote)
+    {
+      case 7:
+        controlLeds(true, false, 0, 70); //  enciende pero no apaga
+        controlLeds(false, false, 0, 0);
+        break;
+      case 8:
+        controlLeds(true, false, 0, 70); //  enciende pero no apaga
+        controlLeds(false, false, 0, 0);
+        break;
+      default:
+        digitalWrite(animacionIntro[thisNote], HIGH);
+        break;
+    }
+    noteDuration = 1000 / noteDurationsIntro[thisNote];
+    tone(buzzer, melodyIntro[thisNote], noteDuration);
+    delay(15);
+    if (thisNote > 3 && thisNote < 7)
+    {
+      digitalWrite(animacionIntro[thisNote], LOW);
+    }
     int pauseBetweenNotes = noteDuration * 1.30;
     delay(pauseBetweenNotes);
     noTone(buzzer);
-	
+
   }
   delay(50);
   Serial.println("Comienza!");
 }
 
 void lose() {
-	for (int thisNote = 0; thisNote < 6; thisNote++) {
-		switch (thisNote)
-		{
-		case 4:
-			controlLeds(false, false, 0, 0); //off todo
-			break;
-		case 5:
-			controlLeds(true, false, 0, 70); //  enciende pero no apaga
-			controlLeds(false, false, 0, 0);
-			break;
-		default:
-			digitalWrite(thisNote + (animacionLose[thisNote] - thisNote), HIGH);
-			break;
-		}
-		noteDuration = 1000 / noteDurationsLose[thisNote];
-		tone(buzzer, melodyLose[thisNote], noteDuration);
-		
-		int pauseBetweenNotes = noteDuration * 1.30;
-		delay(pauseBetweenNotes);
-		noTone(buzzer);
-	}
+  for (int thisNote = 0; thisNote < 6; thisNote++) {
+    switch (thisNote)
+    {
+      case 4:
+        controlLeds(false, false, 0, 0); //off todo
+        break;
+      case 5:
+        controlLeds(true, false, 0, 70); //  enciende pero no apaga
+        controlLeds(false, false, 0, 0);
+        break;
+      default:
+        digitalWrite(thisNote + (animacionLose[thisNote] - thisNote), HIGH);
+        break;
+    }
+    noteDuration = 1000 / noteDurationsLose[thisNote];
+    tone(buzzer, melodyLose[thisNote], noteDuration);
+
+    int pauseBetweenNotes = noteDuration * 1.30;
+    delay(pauseBetweenNotes);
+    noTone(buzzer);
+  }
 }
 
 void win() {
-	for (int thisNote = 0; thisNote < 6; thisNote++) {
-		noteDuration = 1000 / noteDurationsWin[thisNote];
-		tone(buzzer, melodyWin[thisNote], noteDuration);
-		int pauseBetweenNotes = noteDuration * 1.30;
-		delay(pauseBetweenNotes);
-		noTone(buzzer);
-	}
+  for (int thisNote = 0; thisNote < 6; thisNote++) {
+    noteDuration = 1000 / noteDurationsWin[thisNote];
+    tone(buzzer, melodyWin[thisNote], noteDuration);
+    int pauseBetweenNotes = noteDuration * 1.30;
+    delay(pauseBetweenNotes);
+    noTone(buzzer);
+  }
 }
 
 void addNew() {
@@ -166,7 +171,8 @@ void sequencyPlayer() {
 
 void play(short num, int duracion) {
   digitalWrite(leds[num], HIGH); //se prende el led correspondiente a la nota Ej. nota 3 -- led 3
-  tone(buzzer, tones[num], duracion); //BEEEEP
+  //tone(buzzer, tones[num], duracion); //BEEEEP
+  tone(buzzer, tonePicker(num), duracion); //BEEEEP
   //Serial.println("SONOO");
   delay(duracion);
   //noTone(buzzer);
@@ -179,8 +185,8 @@ short getButtonPressed() {
   for (int i = 0; i < buttonQuantity; i++) {
     if (digitalRead(buttons[i]) == HIGH) {
       //Serial.println(colores[i]);
-	  Serial.print("Se presiono el boton ");
-	  Serial.println(convLedColor(i));
+      Serial.print("Se presiono el boton ");
+      Serial.println(convLedColor(i));
       return i; //esto devuelve el numero del boton (que esta asociado a color)
     }
   }
@@ -188,70 +194,89 @@ short getButtonPressed() {
 }
 
 void convNumNote(short freq) {
-	switch (freq)
-	{
-	case 262:
-		Serial.println("DO - Rojo");
-		break;
-	case 330:
-		Serial.println("MI - Amarillo");
-		break;
-	case 349:
-		Serial.println("FA - Verde");
-		break;
-	case 440:
-		Serial.println("LA - Azul");
-		break;
+  switch (freq)
+  {
+    case 262:
+      Serial.println("DO - Rojo");
+      break;
+    case 330:
+      Serial.println("MI - Amarillo");
+      break;
+    case 349:
+      Serial.println("FA - Verde");
+      break;
+    case 440:
+      Serial.println("LA - Azul");
+      break;
 
-	default:
-		Serial.println("Fuera de contexto");
-		break;
-	}
+    default:
+      Serial.println("Fuera de contexto");
+      break;
+  }
 }
 
-char* convLedColor(short button){
-	switch (button)
-	{
-	case 0:
-		return "rojo";
-		break;
-	case 1:
-		return "amarillo";
-		break;
-	case 2:
-		return "verde";
-		break;
-	case 3:
-		return "azul";
-		break;
-	default:
-		Serial.println("Fuera de contexto");
-		break;
-	}
+char* convLedColor(short button) {
+  switch (button)
+  {
+    case 0:
+      return "rojo";
+      break;
+    case 1:
+      return "amarillo";
+      break;
+    case 2:
+      return "verde";
+      break;
+    case 3:
+      return "azul";
+      break;
+    default:
+      Serial.println("Fuera de contexto");
+      break;
+  }
 }
 
 void controlLeds(bool estado, bool fade, int retardo, int retardo2) {
-	if (estado)
-	{
-		for (int i = 0; i < 4; i++) {
-			digitalWrite(leds[i], HIGH);
-			delay(retardo);
-		}
-		if (fade)
-		{
-			for (int i = 0; i < 4; i++) {
-				digitalWrite(leds[i], LOW);
-				delay(retardo);
-			}
-		}
-		delay(retardo2);
-		
-	}
-	else
-	{
-		for (int i = 0; i < 4; i++) {
-			digitalWrite(leds[i], LOW);
-		}
-		delay(retardo2);
-	}
+  if (estado)
+  {
+    for (int i = 0; i < 4; i++) {
+      digitalWrite(leds[i], HIGH);
+      delay(retardo);
+    }
+    if (fade)
+    {
+      for (int i = 0; i < 4; i++) {
+        digitalWrite(leds[i], LOW);
+        delay(retardo);
+      }
+    }
+    delay(retardo2);
+
+  }
+  else
+  {
+    for (int i = 0; i < 4; i++) {
+      digitalWrite(leds[i], LOW);
+    }
+    delay(retardo2);
+  }
+}
+
+int tonePicker(short num){
+   switch (tono)
+  {
+    case 0:
+      return tones[num];
+      break;
+    case 1:
+      return tones_1[num];
+      break;
+    case 2:
+      break;
+    case 3:
+      break;
+    default:
+      Serial.println("Fuera de contexto");
+      break;
+  }
 }
